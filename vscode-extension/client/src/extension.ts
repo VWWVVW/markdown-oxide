@@ -2,13 +2,13 @@
 import * as path from 'path';
 import { workspace, ExtensionContext } from 'vscode';
 
-import * as vscode from 'vscode'
-import * as which from "which"
-import * as os from "os"
-import fetch from "node-fetch"
-import * as fs from "fs"
-import * as stream from "stream"
-import {promisify} from "util"
+import * as vscode from 'vscode';
+import * as which from "which";
+import * as os from "os";
+import fetch from "node-fetch";
+import * as fs from "fs";
+import * as stream from "stream";
+import { promisify } from "util";
 
 import {
 	LanguageClient,
@@ -22,22 +22,22 @@ import {
 
 let client: LanguageClient;
 
-const extId = "moxide"
-const versionTag = "v0.22.0"
+const extId = "moxide";
+const versionTag = "v0.22.0";
 
-const releaseBaseUrl = "https://github.com/Feel-ix-343/markdown-oxide/releases/download"
+const releaseBaseUrl = "https://github.com/Feel-ix-343/markdown-oxide/releases/download";
 export async function activate(context: ExtensionContext) {
 	// The server is implemented in node
 	// const serverModule = context.asAbsolutePath(
 	// 	path.join('server', 'out', 'server.js')
 	// );
-	
-
-	let findReferencesCmd = vscode.commands.registerCommand(`${extId}.findReferences`, findReferencesCmdImpl);
 
 
-  let path = await languageServerPath(context);
-  console.log(path)
+	const findReferencesCmd = vscode.commands.registerCommand(`${extId}.findReferences`, findReferencesCmdImpl);
+
+
+	const path = await languageServerPath(context);
+	console.log(path);
 
 	// If the extension is launched in debug mode then the debug server options are used
 	// Otherwise the run options are used
@@ -94,55 +94,55 @@ async function findReferencesCmdImpl(data: FindReferencesData) {
 			vscode.Uri.parse(data.uri),
 			client.protocol2CodeConverter.asPosition(data.position),
 			data.locations.map(client.protocol2CodeConverter.asLocation)
-		)
+		);
 	}
 }
 
 
 function serverBinName() {
-  let platform = os.platform();
-  if (platform == "win32") {
-    return `markdown-oxide.exe`
-  } else {
-    return `markdown-oxide`
-  }
+	const platform = os.platform();
+	if (platform == "win32") {
+		return `markdown-oxide.exe`;
+	} else {
+		return `markdown-oxide`;
+	}
 }
 
 async function languageServerPath(context: vscode.ExtensionContext) {
-  // Check if in path
-  let binName = serverBinName();
-  let inPath = new Promise<string>((resolve, reject) => {
-    which(binName, (err, path) => {
-      if (err) {
-        reject(err);
-      }
-      if (path === undefined) {
-        reject(new Error('which return undefined path'));
-      } else {
-        resolve(path);
-      }
-    });
-  });
-  let resolved: string = await inPath.catch((_) => null);
+	// Check if in path
+	const binName = serverBinName();
+	const inPath = new Promise<string>((resolve, reject) => {
+		which(binName, (err, path) => {
+			if (err) {
+				reject(err);
+			}
+			if (path === undefined) {
+				reject(new Error('which return undefined path'));
+			} else {
+				resolve(path);
+			}
+		});
+	});
+	const resolved: string = await inPath.catch((_) => null);
 
-  if (resolved) {
-    return resolved
-  }
+	if (resolved) {
+		return resolved;
+	}
 
-  // Otherwise, check downloads and download if necessary
+	// Otherwise, check downloads and download if necessary
 	const targetDir = vscode.Uri.joinPath(context.globalStorageUri, versionTag);
 	const targetFile = vscode.Uri.joinPath(targetDir, serverBinName());
 
 
-  try {
-    await vscode.workspace.fs.stat(targetFile);
+	try {
+		await vscode.workspace.fs.stat(targetFile);
 		console.log("Markdown Oxide is already downloaded");
-  } catch {
-    await downloadServerFromGH(context, targetDir, targetFile)
+	} catch {
+		await downloadServerFromGH(context, targetDir, targetFile);
 
-    console.log(targetFile.fsPath)
+		console.log(targetFile.fsPath);
 
-  }
+	}
 
 	try {
 		await vscode.workspace.fs.stat(targetFile);
@@ -159,20 +159,20 @@ async function languageServerPath(context: vscode.ExtensionContext) {
 async function downloadServerFromGH(context: vscode.ExtensionContext, targetDir: vscode.Uri, targetFile: vscode.Uri) {
 	await vscode.workspace.fs.createDirectory(targetDir);
 
-  await vscode.window.withProgress({
-    cancellable: false,
-    title: `Downloading Markdown Oxide ${versionTag}`,
-    location: vscode.ProgressLocation.Notification,
-  }, async (progress, _) => {
-			let lastPercent = 0;
-			await downloadRelease(targetDir, targetFile, (percent) => {
-				progress.report({ message: `${percent}%`, increment: percent - lastPercent });
-				lastPercent = percent;
-			});
+	await vscode.window.withProgress({
+		cancellable: false,
+		title: `Downloading Markdown Oxide ${versionTag}`,
+		location: vscode.ProgressLocation.Notification,
+	}, async (progress, _) => {
+		let lastPercent = 0;
+		await downloadRelease(targetDir, targetFile, (percent) => {
+			progress.report({ message: `${percent}%`, increment: percent - lastPercent });
+			lastPercent = percent;
+		});
 
 
 
-  })
+	});
 }
 
 /// Taken from https://github.com/artempyanykh/marksman-vscode/blob/main/src/extension.ts
@@ -195,14 +195,14 @@ async function downloadRelease(targetDir: vscode.Uri, targetFile: vscode.Uri, on
 		console.error(`Unexpected content-length: ${contentLength}`);
 		return;
 	}
-	let totalBytes = Number.parseInt(contentLength);
+	const totalBytes = Number.parseInt(contentLength);
 	console.log(`The size of the binary is ${totalBytes} bytes`);
 
 	let currentBytes = 0;
 	let reportedPercent = 0;
 	resp.body.on('data', (chunk) => {
 		currentBytes = currentBytes + chunk.length;
-		let currentPercent = Math.floor(currentBytes / totalBytes * 100);
+		const currentPercent = Math.floor(currentBytes / totalBytes * 100);
 		if (currentPercent > reportedPercent) {
 			onProgress(currentPercent);
 			reportedPercent = currentPercent;
@@ -224,35 +224,35 @@ async function downloadRelease(targetDir: vscode.Uri, targetFile: vscode.Uri, on
 
 
 function releaseDownloadUrl(): string {
-  return releaseBaseUrl + "/" + versionTag + "/" + releaseBinName();
+	return releaseBaseUrl + "/" + versionTag + "/" + releaseBinName();
 }
 
 function releaseBinName(): string {
 	const platform = os.platform();
 	const arch = os.arch();
 
-  let arch_string: string = null;
-  if (arch == "x64") {
-    arch_string = "x86_64"
-  } else if (arch == "arm64" || arch == "aarch64") {
-    arch_string = "aarch64"
-  }
+	let arch_string: string = null;
+	if (arch == "x64") {
+		arch_string = "x86_64";
+	} else if (arch == "arm64" || arch == "aarch64") {
+		arch_string = "aarch64";
+	}
 
-  let platform_string: string = null;
-  if (platform == "win32") {
-    platform_string = "pc-windows-gnu.exe"
-  } else if (platform == "darwin") {
-    platform_string = "apple-darwin"
-  } else if (platform == "linux") {
-    platform_string = "unknown-linux-gnu"
-  }
+	let platform_string: string = null;
+	if (platform == "win32") {
+		platform_string = "pc-windows-gnu.exe";
+	} else if (platform == "darwin") {
+		platform_string = "apple-darwin";
+	} else if (platform == "linux") {
+		platform_string = "unknown-linux-gnu";
+	}
 
-  if (arch_string != null && platform_string != null) {
+	if (arch_string != null && platform_string != null) {
 
-    return `markdown-oxide-${versionTag}-${arch_string}-${platform_string}`
+		return `markdown-oxide-${versionTag}-${arch_string}-${platform_string}`;
 
-  } else {
-    throw new Error(`Unsupported platform: ${platform}; arch ${arch}`)
-  }
+	} else {
+		throw new Error(`Unsupported platform: ${platform}; arch ${arch}`);
+	}
 }
 
